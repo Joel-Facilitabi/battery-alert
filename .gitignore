@@ -1,0 +1,16 @@
+# Chave de assinatura e segredos - NUNCA enviar para o GitHub
+_CHAVES-NAO-ENVIAR/
+*.jks
+*.keystore
+SEGREDOS-GITHUB.txt
+
+# Arquivos gerados pelo Android Studio / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.cxx/

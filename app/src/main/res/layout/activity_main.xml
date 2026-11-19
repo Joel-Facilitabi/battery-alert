@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:padding="24dp">
+
+    <!-- Título -->
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Battery Alert"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/textSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nunca fique sem bateria para ligar o BYD"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        app:layout_constraintTop_toBottomOf="@id/textTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="4dp" />
+
+    <!-- Card de Bateria Atual -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardBattery"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:layout_constraintTop_toBottomOf="@id/textSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bateria Atual"
+                android:textSize="16sp"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/textBatteryLevel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---%"
+                android:textSize="64sp"
+                android:textStyle="bold"
+                android:textColor="@color/battery_good"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/textChargingStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Card de Configuração -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardConfig"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:layout_constraintTop_toBottomOf="@id/cardBattery"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alertar quando a bateria estiver em:"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/textThresholdValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="30%"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp" />
+
+            <SeekBar
+                android:id="@+id/seekBarThreshold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:min="5"
+                android:max="95"
+                android:progress="30"
+                android:progressTint="@color/accent"
+                android:thumbTint="@color/accent"
+                android:layout_marginTop="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="5%"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="95%"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="end" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Switch de ativar -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardSwitch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/card_background"
+        app:layout_constraintTop_toBottomOf="@id/cardConfig"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchEnable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Monitoramento Inativo"
+            android:textSize="18sp"
+            android:textColor="@color/text_primary"
+            android:padding="24dp"
+            app:thumbTint="@color/switch_thumb"
+            app:trackTint="@color/switch_track" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Info -->
+    <TextView
+        android:id="@+id/textInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="O app monitora a bateria em segundo plano e envia um alerta com som e vibração quando o nível cair abaixo do limite configurado. Reinicia automaticamente após reiniciar o celular."
+        android:textSize="12sp"
+        android:textColor="@color/text_hint"
+        android:textAlignment="center"
+        app:layout_constraintTop_toBottomOf="@id/cardSwitch"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"
+        android:paddingHorizontal="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

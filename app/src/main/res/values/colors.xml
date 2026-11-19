@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#FF1A1A2E</color>
+    <color name="card_background">#FF16213E</color>
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFB0B0C0</color>
+    <color name="text_hint">#FF707080</color>
+    <color name="accent">#FF4FC3F7</color>
+
+    <color name="battery_good">#FF4CAF50</color>
+    <color name="battery_medium">#FFFFC107</color>
+    <color name="battery_low">#FFF44336</color>
+
+    <color name="switch_thumb">#FF4FC3F7</color>
+    <color name="switch_track">#FF0A3D62</color>
+</resources>
