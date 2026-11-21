@@ -31,6 +31,11 @@ class BatteryMonitorService : Service() {
         const val PREF_THRESHOLD = "battery_threshold"
         const val PREF_SERVICE_ENABLED = "service_enabled"
         const val PREF_ALERT_SHOWN = "alert_shown"
+        const val HIGH_NOTIFICATION_ID = 3
+        const val DEFAULT_UPPER = 90
+        const val PREF_UPPER_ENABLED = "upper_enabled"
+        const val PREF_UPPER_THRESHOLD = "upper_threshold"
+        const val PREF_HIGH_SHOWN = "high_shown"
     }
 
     private var batteryReceiver: BroadcastReceiver? = null
@@ -164,6 +169,19 @@ class BatteryMonitorService : Service() {
             prefs.edit().putBoolean(PREF_ALERT_SHOWN, false).apply()
         }
 
+        // Limite superior: avisa uma vez por carga quando chegar ao nível escolhido
+        val upperEnabled = prefs.getBoolean(PREF_UPPER_ENABLED, false)
+        val upper = prefs.getInt(PREF_UPPER_THRESHOLD, DEFAULT_UPPER)
+        val highShown = prefs.getBoolean(PREF_HIGH_SHOWN, false)
+        if (upperEnabled && isCharging && percent >= upper && !highShown) {
+            showChargedAlert(percent)
+            prefs.edit().putBoolean(PREF_HIGH_SHOWN, true).apply()
+        } else if (!isCharging && highShown) {
+            // Tirou do carregador: prepara para a próxima carga
+            getSystemService(NotificationManager::class.java).cancel(HIGH_NOTIFICATION_ID)
+            prefs.edit().putBoolean(PREF_HIGH_SHOWN, false).apply()
+        }
+
         // Atualiza notificação do serviço com nível atual
         updateServiceNotification(percent, threshold, percent <= threshold && !isCharging)
     }
@@ -202,6 +220,43 @@ class BatteryMonitorService : Service() {
 
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(ALERT_NOTIFICATION_ID, notification)
+
+        if (WhatsAppSender.isEnabled(this)) {
+            WhatsAppSender.send(
+                this,
+                "⚡ *Battery Alert*: a bateria do celular está em $percent%. " +
+                        "Conecte o carregador para conseguir ligar o BYD!"
+            )
+        }
+    }
+
+    private fun showChargedAlert(percent: Int) {
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 2, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_ALERT)
+            .setContentTitle("🔋 Carga em $percent%")
+            .setContentText("Atingiu o limite de carga. Já pode tirar do carregador.")
+            .setSmallIcon(R.drawable.ic_battery)
+            .setColor(Color.parseColor("#4CAF50"))
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+
+        getSystemService(NotificationManager::class.java).notify(HIGH_NOTIFICATION_ID, notification)
+
+        if (WhatsAppSender.isEnabled(this)) {
+            WhatsAppSender.send(
+                this,
+                "🔋 *Battery Alert*: o celular chegou a $percent% de carga. Já pode tirar do carregador."
+            )
+        }
     }
 
     private fun dismissAlert() {

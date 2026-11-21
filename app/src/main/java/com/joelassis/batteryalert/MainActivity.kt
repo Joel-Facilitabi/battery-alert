@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -99,6 +100,91 @@ class MainActivity : AppCompatActivity() {
             toggleService(isChecked)
             updateButtonState(isChecked)
         }
+
+        setupUpperLimit()
+        setupWhatsapp()
+    }
+
+    private fun setupUpperLimit() {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val upper = prefs.getInt(BatteryMonitorService.PREF_UPPER_THRESHOLD, BatteryMonitorService.DEFAULT_UPPER)
+
+        binding.switchUpper.isChecked = prefs.getBoolean(BatteryMonitorService.PREF_UPPER_ENABLED, false)
+        binding.seekBarUpper.progress = upper
+        binding.textUpperValue.text = "$upper%"
+
+        binding.switchUpper.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit()
+                .putBoolean(BatteryMonitorService.PREF_UPPER_ENABLED, isChecked)
+                .putBoolean(BatteryMonitorService.PREF_HIGH_SHOWN, false)
+                .apply()
+        }
+
+        binding.seekBarUpper.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                binding.textUpperValue.text = "${progress.coerceIn(50, 100)}%"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                val value = (seekBar?.progress ?: BatteryMonitorService.DEFAULT_UPPER).coerceIn(50, 100)
+                prefs.edit()
+                    .putInt(BatteryMonitorService.PREF_UPPER_THRESHOLD, value)
+                    .putBoolean(BatteryMonitorService.PREF_HIGH_SHOWN, false)
+                    .apply()
+            }
+        })
+    }
+
+    private fun setupWhatsapp() {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+
+        binding.editPhone.setText(prefs.getString(WhatsAppSender.PREF_WA_PHONE, ""))
+        binding.editApiKey.setText(prefs.getString(WhatsAppSender.PREF_WA_APIKEY, ""))
+        binding.switchWhatsapp.isChecked = prefs.getBoolean(WhatsAppSender.PREF_WA_ENABLED, false)
+
+        binding.switchWhatsapp.setOnCheckedChangeListener { _, isChecked ->
+            saveWhatsappFields()
+            prefs.edit().putBoolean(WhatsAppSender.PREF_WA_ENABLED, isChecked).apply()
+        }
+
+        binding.buttonHowTo.setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(WhatsAppSender.SETUP_URL)))
+        }
+
+        binding.buttonTest.setOnClickListener {
+            saveWhatsappFields()
+            binding.buttonTest.isEnabled = false
+            binding.buttonTest.text = "Enviando..."
+            WhatsAppSender.send(
+                this,
+                "✅ *Battery Alert* configurado! Você vai receber os avisos de bateria por aqui."
+            ) { ok, message ->
+                binding.buttonTest.isEnabled = true
+                binding.buttonTest.text = "Salvar e testar"
+                if (ok) {
+                    binding.switchWhatsapp.isChecked = true
+                    prefs.edit().putBoolean(WhatsAppSender.PREF_WA_ENABLED, true).apply()
+                }
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun saveWhatsappFields() {
+        // Mantém só dígitos e o "+" do número
+        val phone = binding.editPhone.text?.toString().orEmpty().filter { it.isDigit() || it == '+' }
+        val apiKey = binding.editApiKey.text?.toString()?.trim().orEmpty()
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+            .putString(WhatsAppSender.PREF_WA_PHONE, phone)
+            .putString(WhatsAppSender.PREF_WA_APIKEY, apiKey)
+            .apply()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveWhatsappFields()
     }
 
     private fun toggleService(enable: Boolean) {
