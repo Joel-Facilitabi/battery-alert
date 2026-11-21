@@ -45,6 +45,19 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateBatteryInfo()
+        ensureServiceRunning()
+    }
+
+    // Se o monitoramento está marcado como ativo, garante que o serviço está rodando
+    // (o Android encerra o serviço quando o app é atualizado)
+    private fun ensureServiceRunning() {
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        if (!prefs.getBoolean(BatteryMonitorService.PREF_SERVICE_ENABLED, false)) return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+        startForegroundService(Intent(this, BatteryMonitorService::class.java))
     }
 
     private fun setupUI() {
