@@ -11,7 +11,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.RingtoneManager
+import android.graphics.Color
 import android.os.BatteryManager
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
@@ -32,6 +35,21 @@ class BatteryMonitorService : Service() {
 
     private var batteryReceiver: BroadcastReceiver? = null
 
+    // Pisca-pisca da notificação quando a bateria está na faixa de alerta
+    private val blinkHandler = Handler(Looper.getMainLooper())
+    private var blinking = false
+    private var blinkOn = true
+    private var lastPercent = -1
+    private var lastThreshold = DEFAULT_THRESHOLD
+    private val blinkRunnable = object : Runnable {
+        override fun run() {
+            if (!blinking) return
+            blinkOn = !blinkOn
+            postServiceNotification(lastPercent, lastThreshold, low = true, highlight = blinkOn)
+            blinkHandler.postDelayed(this, 1000L)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
@@ -47,6 +65,7 @@ class BatteryMonitorService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopBlinking()
         batteryReceiver?.let {
             try { unregisterReceiver(it) } catch (_: Exception) {}
         }
@@ -146,7 +165,7 @@ class BatteryMonitorService : Service() {
         }
 
         // Atualiza notificação do serviço com nível atual
-        updateServiceNotification(percent, threshold)
+        updateServiceNotification(percent, threshold, percent <= threshold && !isCharging)
     }
 
     private fun showBatteryAlert(percent: Int) {
@@ -190,23 +209,56 @@ class BatteryMonitorService : Service() {
         manager.cancel(ALERT_NOTIFICATION_ID)
     }
 
-    private fun updateServiceNotification(currentPercent: Int, threshold: Int) {
+    private fun updateServiceNotification(currentPercent: Int, threshold: Int, low: Boolean) {
+        lastPercent = currentPercent
+        lastThreshold = threshold
+        if (low) {
+            if (!blinking) {
+                blinking = true
+                blinkOn = true
+                blinkHandler.postDelayed(blinkRunnable, 1000L)
+            }
+            postServiceNotification(currentPercent, threshold, low = true, highlight = blinkOn)
+        } else {
+            stopBlinking()
+            postServiceNotification(currentPercent, threshold, low = false, highlight = false)
+        }
+    }
+
+    private fun stopBlinking() {
+        blinking = false
+        blinkHandler.removeCallbacks(blinkRunnable)
+    }
+
+    private fun postServiceNotification(currentPercent: Int, threshold: Int, low: Boolean, highlight: Boolean) {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
-            .setContentTitle("Bateria: $currentPercent%")
-            .setContentText("Alerta configurado para $threshold%")
-            .setSmallIcon(R.drawable.ic_battery)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID_SERVICE)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setSilent(true)
-            .build()
+            .setOnlyAlertOnce(true)
+
+        if (low) {
+            // Faixa de alerta: vermelho, alternando a cada segundo para "piscar"
+            builder
+                .setContentTitle(if (highlight) "🔴 Bateria baixa: $currentPercent%" else "⚪ Bateria baixa: $currentPercent%")
+                .setContentText("Abaixo do alerta de $threshold% — conecte o carregador")
+                .setSmallIcon(if (highlight) R.drawable.ic_battery_alert else R.drawable.ic_battery)
+                .setColor(Color.RED)
+                .setColorized(highlight)
+        } else {
+            builder
+                .setContentTitle("Bateria: $currentPercent%")
+                .setContentText("Alerta configurado para $threshold%")
+                .setSmallIcon(R.drawable.ic_battery)
+        }
 
         val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(SERVICE_NOTIFICATION_ID, notification)
+        manager.notify(SERVICE_NOTIFICATION_ID, builder.build())
     }
 }
